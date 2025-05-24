@@ -1,0 +1,32 @@
+import numpy as np, skfuzzy as fuzz, matplotlib.pyplot as plt
+
+temp = np.arange(0, 41, 1)
+fan = np.arange(0, 11, 1)
+
+# Membership functions
+t_low = fuzz.trimf(temp, [0, 0, 20])
+t_med = fuzz.trimf(temp, [10, 20, 30])
+t_high = fuzz.trimf(temp, [20, 30, 40])
+f_low = fuzz.trimf(fan, [0, 0, 5])
+f_med = fuzz.trimf(fan, [2, 5, 8])
+f_high = fuzz.trimf(fan, [5, 10, 10])
+
+# Plot membership functions
+for i, (x, label, funcs) in enumerate([(temp, "Temperature", [t_low, t_med, t_high]),
+                                       (fan, "Fan Speed", [f_low, f_med, f_high])]):
+    plt.subplot(2, 1, i+1)
+    [plt.plot(x, mf, label=l) for mf, l in zip(funcs, ["Low", "Medium", "High"])]
+    plt.title(f"{label} Membership Functions")
+    plt.xlabel(label)
+    plt.ylabel("Membership Degree")
+    plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Fuzzification
+t_in = 28
+lvls = [fuzz.interp_membership(temp, mf, t_in) for mf in [t_low, t_med, t_high]]
+f_comb = sum(f * l for f, l in zip([f_low, f_med, f_high], lvls))
+f_out = fuzz.defuzz(fan, f_comb, 'centroid')
+
+print(f"Temperature: {t_in}°C\nFuzzified fan speed: {f_out:.2f}")
