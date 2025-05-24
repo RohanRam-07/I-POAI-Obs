@@ -1,0 +1,48 @@
+def unify(x, y, s):
+ if s is None: return None
+ if x == y: return s
+ if isinstance(x, str) and x.islower(): return unify_var(x, y, s)
+ if isinstance(y, str) and y.islower(): return unify_var(y, x, s)
+ if isinstance(x, list) and isinstance(y, list) and len(x) == len(y):
+  return unify(x[1:], y[1:], unify(x[0], y[0], s))
+ return None
+
+def unify_var(v, x, s):
+ if v in s: return unify(s[v], x, s)
+ if x in s: return unify(v, s[x], s)
+ if occurs(v, x, s): return None
+ s[v] = x; return s
+
+def occurs(v, x, s):
+ if v == x: return True
+ if isinstance(x, list): return any(occurs(v, xi, s) for xi in x)
+ if x in s: return occurs(v, s[x], s)
+ return False
+
+def negate(lit): return lit[1:] if lit.startswith("~") else f"~{lit}"
+
+def resolve(c1, c2):
+ res = []
+ for l1 in c1:
+  for l2 in c2:
+   if l1 == negate(l2):
+    nc = list(set(c1 + c2)); nc.remove(l1); nc.remove(l2)
+    if nc not in res: res.append(nc)
+ return res
+
+def resolution(kb, q):
+ clauses = kb + [[negate(l)] for l in q]
+ while True:
+  new = []
+  for i in range(len(clauses)):
+   for j in range(i+1, len(clauses)):
+    for r in resolve(clauses[i], clauses[j]):
+     if r == []: return True
+     if r not in new: new.append(r)
+  if all(n in clauses for n in new): return False
+  clauses += new
+
+# Example
+kb = [["~P", "Q"], ["P"], ["~Q", "R"], ["~R"]]
+query = ["R"]
+print("Satisfiable" if resolution(kb, query) else "Not satisfiable")
